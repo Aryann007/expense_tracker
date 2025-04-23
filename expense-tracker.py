@@ -6,10 +6,8 @@ from datetime import datetime
 from collections import defaultdict
 import locale
 
-# Set locale for currency formatting
 locale.setlocale(locale.LC_ALL, '')
 
-# Get directory of the script for reliable file location
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 FILENAME = os.path.join(SCRIPT_DIR, 'expenses.csv')
 
@@ -22,7 +20,6 @@ COLORS = {
     "border": "#dee2e6"
 }
 
-# -------------------- File Operations --------------------
 def initialize_file():
     try:
         if not os.path.exists(FILENAME):
@@ -56,10 +53,10 @@ def read_expenses():
         
         with open(FILENAME, mode='r') as file:
             reader = csv.reader(file)
-            next(reader, None)  # Skip header
+            next(reader, None)
             
             for row in reader:
-                if not row:  # Skip empty rows
+                if not row:
                     continue
                 expenses.append(row)
     except Exception as e:
@@ -67,7 +64,6 @@ def read_expenses():
     
     return expenses
 
-# -------------------- GUI Functions --------------------
 def submit_expense():
     category = category_var.get()
     amount = amount_entry.get()
@@ -90,7 +86,6 @@ def submit_expense():
         return
 
     if add_expense(date, category, amount):
-        # Reset inputs
         amount_entry.delete(0, tk.END)
         amount_entry.insert(0, "Amount")
         date_entry.delete(0, tk.END)
@@ -106,7 +101,7 @@ def update_table():
         expense_table.delete(row)
 
     expenses = read_expenses()
-    for expense in expenses[-100:]:  # Show only the last 100 expenses
+    for expense in expenses[-100:]:
         date, category, amount = expense
         try:
             formatted_amount = f"₹{float(amount):,.2f}"
@@ -138,35 +133,28 @@ def update_summary():
         except ValueError:
             continue
 
-    # Update total label
     total_var.set(f"Total: ₹{total:,.2f}")
 
-    # Clear previous summaries
     for widget in category_frame.winfo_children():
         widget.destroy()
     for widget in monthly_frame.winfo_children():
         widget.destroy()
 
-    # Update category breakdown
     row = 0
     for cat, amt in sorted(category_summary.items(), key=lambda x: x[1], reverse=True):
         percentage = (amt / total * 100) if total > 0 else 0
         
-        # Create frame for this category row
         cat_row = tk.Frame(category_frame, bg=COLORS["bg"])
         cat_row.pack(fill="x", pady=5)
         
-        # Category label
         tk.Label(cat_row, text=f"{cat}", font=("Helvetica", 10), 
                  bg=COLORS["bg"], fg=COLORS["text"], anchor="w").pack(side="left")
         
-        # Amount and percentage on right
         tk.Label(cat_row, text=f"₹{amt:,.2f} ({percentage:.1f}%)", font=("Helvetica", 10),
                  bg=COLORS["bg"], fg=COLORS["light_text"], anchor="e").pack(side="right")
         
         row += 1
 
-    # Update monthly trend (show only last 4 months)
     row = 0
     for month, amt in sorted(monthly_summary.items(), 
                             key=lambda x: datetime.strptime(x[0], "%b %Y") if x[0] else datetime.now(), 
@@ -190,7 +178,6 @@ def set_today_date():
     date_entry.delete(0, tk.END)
     date_entry.insert(0, today)
 
-# -------------------- Main Application --------------------
 def main():
     global root, category_var, amount_entry, date_entry, status_var
     global expense_table, total_var, category_frame, monthly_frame, category_combo
@@ -201,7 +188,6 @@ def main():
     root.configure(bg=COLORS["bg"])
     root.option_add("*Font", "Helvetica 10")
 
-    # Custom styles
     style = ttk.Style()
     style.theme_use('clam')
     style.configure(".", background=COLORS["bg"], foreground=COLORS["text"])
@@ -222,16 +208,13 @@ def main():
                     font=("Helvetica", 10, "bold"))
     style.map("Treeview", background=[("selected", COLORS["accent"])])
 
-    # Initialize file
     if not initialize_file():
         root.destroy()
         return
 
-    # Main container
     main_frame = ttk.Frame(root, padding=20)
     main_frame.pack(fill="both", expand=True)
 
-    # Header
     header_frame = ttk.Frame(main_frame)
     header_frame.pack(fill="x", pady=(0, 20))
 
@@ -240,22 +223,18 @@ def main():
              bg=COLORS["bg"], 
              fg=COLORS["accent"]).pack(side="left")
 
-    # Input Section - Simplified to one row
     input_frame = ttk.Frame(main_frame)
     input_frame.pack(fill="x", pady=(0, 15))
     
-    # Category
     category_var = tk.StringVar()
     category_combo = ttk.Combobox(input_frame, textvariable=category_var, width=15, values=CATEGORIES)
     category_combo.grid(row=0, column=0, padx=(0, 10))
     category_combo.set("Category")
 
-    # Amount
     amount_entry = ttk.Entry(input_frame, width=12, justify="right")
     amount_entry.insert(0, "Amount")
     amount_entry.grid(row=0, column=1, padx=(0, 10))
     
-    # Date with Today button
     date_frame = ttk.Frame(input_frame)
     date_frame.grid(row=0, column=2, padx=(0, 10))
     
@@ -265,28 +244,22 @@ def main():
     today_btn = ttk.Button(date_frame, text="Today", width=6, command=set_today_date)
     today_btn.pack(side="left", padx=2)
     
-    # Submit button
     submit_btn = ttk.Button(input_frame, text="Add", style="Accent.TButton", command=submit_expense)
     submit_btn.grid(row=0, column=3, padx=(10, 0))
     
-    # Configure grid
     input_frame.columnconfigure(3, weight=1)
 
-    # Status bar
     status_var = tk.StringVar()
     status_var.set("Ready")
     status_label = ttk.Label(main_frame, textvariable=status_var, foreground=COLORS["light_text"])
     status_label.pack(fill="x", pady=(0, 10))
 
-    # Create tabs for different views
     notebook = ttk.Notebook(main_frame)
     notebook.pack(fill="both", expand=True)
     
-    # Tab 1: Expenses List
     expenses_tab = ttk.Frame(notebook, padding=10)
     notebook.add(expenses_tab, text="Expenses")
     
-    # Table with scrollbar
     table_frame = ttk.Frame(expenses_tab)
     table_frame.pack(fill="both", expand=True)
     
@@ -301,18 +274,15 @@ def main():
     expense_table.column("Category", width=120)
     expense_table.column("Amount", width=100, anchor="e")
     
-    # Add scrollbar
     table_scroll = ttk.Scrollbar(table_frame, orient="vertical", command=expense_table.yview)
     expense_table.configure(yscrollcommand=table_scroll.set)
     
     expense_table.pack(side="left", fill="both", expand=True)
     table_scroll.pack(side="right", fill="y")
     
-    # Tab 2: Summary and Analysis
     summary_tab = ttk.Frame(notebook, padding=10)
     notebook.add(summary_tab, text="Summary")
     
-    # Total
     total_var = tk.StringVar()
     total_var.set("Total: ₹0.00")
     total_label = tk.Label(summary_tab, 
@@ -322,11 +292,9 @@ def main():
                            fg=COLORS["accent"])
     total_label.pack(pady=(0, 20))
     
-    # Create two columns for summary
     summary_columns = ttk.Frame(summary_tab)
     summary_columns.pack(fill="both", expand=True)
     
-    # Left column: Category breakdown
     cat_section = ttk.Frame(summary_columns, padding=10)
     cat_section.pack(side="left", fill="both", expand=True, padx=(0, 10))
     
@@ -335,13 +303,11 @@ def main():
                          bg=COLORS["bg"], fg=COLORS["text"])
     cat_heading.pack(anchor="w", pady=(0, 10))
     
-    # Add a separator
     ttk.Separator(cat_section, orient="horizontal").pack(fill="x", pady=5)
     
     category_frame = tk.Frame(cat_section, bg=COLORS["bg"])
     category_frame.pack(fill="both", expand=True)
     
-    # Right column: Monthly trend
     month_section = ttk.Frame(summary_columns, padding=10)
     month_section.pack(side="right", fill="both", expand=True, padx=(10, 0))
     
@@ -350,21 +316,17 @@ def main():
                            bg=COLORS["bg"], fg=COLORS["text"])
     month_heading.pack(anchor="w", pady=(0, 10))
     
-    # Add a separator
     ttk.Separator(month_section, orient="horizontal").pack(fill="x", pady=5)
     
     monthly_frame = tk.Frame(month_section, bg=COLORS["bg"])
     monthly_frame.pack(fill="both", expand=True)
 
-    # Set initial data
     set_today_date()
     update_table()
     update_summary()
     
-    # Set focus to first field
     category_combo.focus_set()
     
-    # Select all on entry field click
     def on_entry_click(event, entry, default_text):
         if entry.get() == default_text:
             entry.delete(0, "end")
